@@ -142,7 +142,7 @@ public class SimpleExoPlayer implements ExoPlayer {
     // Build the player and associated objects.
     player = new ExoPlayerImpl(renderers, trackSelector, loadControl);
   }
-
+  
   /**
    * Sets the video scaling mode.
    * <p>
