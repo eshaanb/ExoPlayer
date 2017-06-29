@@ -15,7 +15,7 @@
  */
 package com.google.android.exoplayer2.extractor.flv;
 
-import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.extractor.Extractor;
 import com.google.android.exoplayer2.extractor.ExtractorInput;
 import com.google.android.exoplayer2.extractor.ExtractorOutput;
@@ -42,6 +42,10 @@ public final class FlvExtractor implements Extractor, SeekMap {
     }
 
   };
+
+  public interface VideoFormatChangedListener {
+    void onVideoFormatChanged(Format format);
+  }
 
   // Header sizes.
   private static final int FLV_HEADER_SIZE = 9;
@@ -87,6 +91,8 @@ public final class FlvExtractor implements Extractor, SeekMap {
 
   long firstSkippedAudioTime = -1;
   long tsDelta = 0;
+
+  private VideoFormatChangedListener listener;
 
   public FlvExtractor() {
     scratch = new ParsableByteArray(4);
@@ -199,12 +205,11 @@ public final class FlvExtractor implements Extractor, SeekMap {
     boolean hasAudio = (flags & 0x04) != 0;
     boolean hasVideo = (flags & 0x01) != 0;
     if (hasAudio && audioReader == null) {
-      audioReader = new AudioTagPayloadReader(
-          extractorOutput.track(TAG_TYPE_AUDIO, C.TRACK_TYPE_AUDIO));
+      audioReader = new AudioTagPayloadReader(extractorOutput.track(TAG_TYPE_AUDIO));
     }
     if (hasVideo && videoReader == null) {
-      videoReader = new VideoTagPayloadReader(
-          extractorOutput.track(TAG_TYPE_VIDEO, C.TRACK_TYPE_VIDEO));
+      videoReader = new VideoTagPayloadReader(extractorOutput.track(TAG_TYPE_VIDEO));
+      videoReader.setListener(listener);
     }
     if (metadataReader == null) {
       metadataReader = new ScriptTagPayloadReader(null);
@@ -317,6 +322,13 @@ public final class FlvExtractor implements Extractor, SeekMap {
   @Override
   public long getPosition(long timeUs) {
     return 0;
+  }
+
+  public void setListener(VideoFormatChangedListener listener) {
+    this.listener = listener;
+    if (videoReader != null) {
+      videoReader.setListener(listener);
+    }
   }
 
 }
